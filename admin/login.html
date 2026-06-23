@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin - Domino Store</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .login-box { max-width: 400px; margin: 80px auto; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card login-box">
+        <div class="card-header" style="text-align: center;">ADMIN LOGIN</div>
+        <form id="login-form" style="padding: 15px;">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="uname" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="pwd" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">MASUK</button>
+        </form>
+    </div>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            // Kredensial default statis admin demi kepraktisan XtGem
+            if(document.getElementById('uname').value === "admin" && document.getElementById('pwd').value === "ashari2026") {
+                sessionStorage.setItem('admin_session', 'active');
+                window.location.href = "dashboard.html";
+            } else {
+                alert("Username atau Password salah!");
+            }
+        });
+    </script>
+</body>
+</html>
