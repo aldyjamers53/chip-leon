@@ -131,7 +131,7 @@ function renderProducts() {
         card.className = "product-card";
         card.innerHTML = `
             ${isOut ? '<span class="badge-out">STOK HABIS</span>' : ''}
-            <img class="product-img" src="http://gamingku.xtgem.com/thumbnail.webp" alt="Coin">
+            <img class="product-img" src="/thumbnail.webp" alt="Coin">
             <div class="product-name">${prod.nama}</div>
             <div class="product-price">Rp ${prod.harga.toLocaleString('id-ID')}</div>
             <div class="product-stock">Stok: ${prod.stok}</div>
