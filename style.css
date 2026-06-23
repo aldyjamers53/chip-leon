@@ -236,6 +236,44 @@ body {
     background: var(--bg-card); color: var(--text-main);
     border-radius: 8px; font-size: 0.9rem;
 }
+.form-text-hint {
+    display: block;
+    color: var(--text-color, #4a5568);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.form-text-example {
+    display: block;
+    color: #a0aec0;
+    font-size: 12px;
+    font-style: italic;
+    margin-bottom: 6px;
+}
+
+.form-note {
+    background-color: #fffaf0; /* Warna kekuningan soft untuk area catatan */
+    border-left: 4px solid #dd6b20; /* Garis oranye di sebelah kiri */
+    padding: 8px 12px;
+    margin-top: 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #744210;
+}
+
+.device-alert {
+    display: block;
+    margin-top: 4px;
+    font-weight: bold;
+    color: #e53e3e; /* Warna merah agar pembeli sadar untuk menggunakan Android/PC */
+}
+
+/* Penyesuaian jika website sedang dalam Mode Gelap (Dark Mode) */
+[data-theme="dark"] .form-note {
+    background-color: #2c251e;
+    color: #fbd38d;
+    border-left-color: #f6ad55;
+}
 
 /* Buttons */
 .btn {
