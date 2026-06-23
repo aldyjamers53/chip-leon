@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domino Store - Top Up Higgs Domino Murah dan Terpercaya</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div id="loader" class="loader-container">
+        <div class="spinner"></div>
+    </div>
+
+    <header class="sticky-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fas fa-gamepad"></i></div>
+                <div>
+                    <h1>DOMINO STORE</h1>
+                    <p>Top Up Higgs Domino Murah & Terpercaya</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <span id="store-status" class="status-badge status-open">🟢 TOKO BUKA</span>
+                <button id="theme-toggle" class="theme-btn"><i class="fas fa-moon"></i></button>
+            </div>
+        </div>
+        <nav class="nav-bar">
+            <a href="#beranda" class="nav-link active"><i class="fas fa-home"></i> Beranda</a>
+            <a href="#cara-bayar" class="nav-link"><i class="fas fa-wallet"></i> Bayar</a>
+            <a href="#order-form-section" class="nav-link"><i class="fas fa-shopping-cart"></i> Order</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div id="maintenance-notice" class="maintenance-box hidden"></div>
+
+        <section class="banner-slider" id="beranda">
+            <div class="slider-wrapper" id="slider-wrapper">
+                <div class="slide"><img src="banner1.png" alt="Top Up Higgs Domino Murah"></div>
+                <div class="slide"><img src="banner2.png" alt="Top Up Higgs Domino Murah"></div>
+            </div>
+            <div class="slider-dots" id="slider-dots"></div>
+        </section>
+
+        <div class="main-grid">
+            
+            <section class="products-column">
+                <div class="section-title">
+                    <h2><i class="fas fa-coins"></i> Pilih Paket Koin Emas-D</h2>
+                </div>
+                <div class="products-grid" id="products-container"></div>
+                <div class="pagination" id="pagination"></div>
+            </section>
+
+            <aside class="sidebar-column">
+                <div class="card" id="order-form-section">
+                    <div class="card-header">Formulir Pesanan</div>
+                    <form id="order-form" class="order-form">
+                        <div class="form-group">
+                            <label for="player-id">ID Higgs Domino</label>
+                            <input type="number" id="player-id" placeholder="Masukkan ID Game" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="buyer-name">Nama Pembeli</label>
+                            <input type="text" id="buyer-name" placeholder="Nama Anda" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="whatsapp">Nomor WhatsApp</label>
+                            <input type="tel" id="whatsapp" placeholder="Contoh: 08123456789" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="select-product">Pilih Produk</label>
+                            <select id="select-product" required>
+                                <option value="">-- Pilih Paket Koin --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+    <label>Pilih Metode Pembayaran:</label>
+    <div class="payment-checkbox-group">
+        <label class="payment-check-item">
+            <input type="radio" name="payment_method" value="DANA" checked>
+            <span class="checkmark"></span> DANA
+        </label>
+        <label class="payment-check-item">
+            <input type="radio" name="payment_method" value="OVO">
+            <span class="checkmark"></span> OVO
+        </label>
+        <label class="payment-check-item">
+            <input type="radio" name="payment_method" value="GOPAY">
+            <span class="checkmark"></span> GOPAY
+        </label>
+        <label class="payment-check-item">
+            <input type="radio" name="payment_method" value="BRI">
+            <span class="checkmark"></span> Bank BRI
+        </label>
+        <label class="payment-check-item">
+            <input type="radio" name="payment_method" value="SeaBank">
+            <span class="checkmark"></span> SeaBank
+        </label>
+    </div>
+</div>
+                        <button type="submit" id="btn-submit-order" class="btn btn-primary btn-block">
+                            <i class="fas fa-paper-plane"></i> PESAN SEKARANG
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card" id="cara-bayar">
+                    <div class="card-header">Informasi Pembayaran</div>
+                    <div class="payment-info-list">
+                        <div class="pay-item" style="text-align: center; padding: 15px 10px;">
+                            <i class="fas fa-shield-alt" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 10px;"></i>
+                            <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 5px;">Sistem Pembayaran Aman</p>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                                Detail nomor tujuan transfer dan instruksi bayar akan dikirim secara otomatis melalui WhatsApp setelah Anda mengisi formulir dan menekan tombol <strong>PESAN SEKARANG</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <section class="testi-section">
+            <div class="section-title"><h2><i class="fas fa-comment-dots"></i> Testimoni Pelanggan</h2></div>
+            <div class="testi-slider">
+                <div class="testi-container" id="testi-container">
+                    <div class="testi-card">
+                        <p class="comment">"Mantap! Koin langsung masuk gak pakai lama. Recommended!"</p>
+                        <p class="user">- Rian, Surabaya</p>
+                    </div>
+                    <div class="testi-card">
+                        <p class="comment">"Pelayanan admin ramah, harga paling murah sekaskus."</p>
+                        <p class="user">- Amalia, Medan</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <a href="https://wa.me/6281556828324?text=Halo%20Admin,%20saya%20ingin%20top%20up%20Higgs%20Domino." class="floating-wa" target="_blank">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h3>Domino Store</h3>
+                <p>Solusi top up game terpercaya, cepat, dan aman.</p>
+            </div>
+            <div>
+                <h3>Sosial Media</h3>
+                <div class="socmed-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="https://wa.me/6281556828324"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#"><i class="fab fa-telegram"></i></a>
+                </div>
+            </div>
+            <div>
+                <h3>Sistem Status</h3>
+                <p>Server: <span class="text-green">Online</span></p>
+                <p>Jam Kerja: 08.00 - 22.00 WIB</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            Copyright &copy; 2026 Domino Store. All Rights Reserved.
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
