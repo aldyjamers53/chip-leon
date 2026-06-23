@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Domino Store</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .dash-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .dash-card { background: var(--primary-color); color: white; padding: 15px; border-radius: 8px; text-align: center; }
+        .dash-card h4 { font-size: 0.8rem; opacity: 0.9; }
+        .dash-card p { font-size: 1.5rem; font-weight: bold; }
+        .table-responsive { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { border: 1px solid var(--border-color); padding: 8px; text-align: left; }
+        th { background: rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    <header class="sticky-header">
+        <div class="header-container">
+            <h2>PANEL KONTROL ADMIN</h2>
+            <button class="btn btn-primary btn-sm" onclick="logout()">Keluar</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="dash-grid">
+            <div class="dash-card"><h4>Total Produk</h4><p id="stat-prod">0</p></div>
+            <div class="dash-card" style="background:#10B981"><h4>Total Pesanan</h4><p id="stat-order">0</p></div>
+            <div class="dash-card" style="background:#F59E0B"><h4>Total Stok</h4><p id="stat-stok">0</p></div>
+            <div class="dash-card" style="background:#64748B"><h4>Status Toko</h4><p id="stat-status">-</p></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Pengaturan Operasional Toko</div>
+            <div style="padding: 15px; display: flex; flex-direction: column; gap:10px;">
+                <div>
+                    <button class="btn btn-primary btn-sm" onclick="setToko('buka')">Buka Toko</button>
+                    <button class="btn btn-block btn-sm" style="background:#EF4444; color:white; width:auto; display:inline;" onclick="setToko('tutup')">Tutup Toko</button>
+                </div>
+                <hr style="border:0; border-top:1px solid var(--border-color)">
+                <div class="form-group">
+                    <label><input type="checkbox" id="check-maint" onchange="toggleMaint()"> Aktifkan Mode Maintenance</label>
+                </div>
+                <div class="form-group">
+                    <label>Pesan Pemeliharaan:</label>
+                    <input type="text" id="maint-msg" value="Sedang ada perbaikan sistem.">
+                    <button class="btn btn-primary btn-sm" style="margin-top:5px" onclick="saveMaintMsg()">Simpan Pesan</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Kelola Item / Produk</div>
+            <div style="padding: 15px;">
+                <form id="prod-form" style="margin-bottom: 20px; border-bottom:1px solid #ddd; padding-bottom:15px;">
+                    <input type="hidden" id="edit-id">
+                    <div class="form-group"><label>Nama Item</label><input type="text" id="prod-name" required></div>
+                    <div class="form-group"><label>Harga (Rp)</label><input type="number" id="prod-price" required></div>
+                    <div class="form-group"><label>Jumlah Stok</label><input type="number" id="prod-stock" required></div>
+                    <button type="submit" class="btn btn-primary btn-sm">Simpan / Perbarui Item</button>
+                </form>
+
+                <div class="table-responsive">
+                    <table id="table-produk">
+                        <thead>
+                            <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Daftar Transaksi Masuk</div>
+            <div class="table-responsive" style="padding: 10px;">
+                <table id="table-pesanan">
+                    <thead>
+                        <tr><th>TrxID</th><th>Pelanggan</th><th>Paket</th><th>Metode</th><th>Status</th><th>Ubah Sinyal</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Guard Authentication Sederhana
+        if(sessionStorage.getItem('admin_session') !== 'active') { window.location.href = "login.html"; }
+
+        let listProduk = JSON.parse(localStorage.getItem('db_produk'));
+        let configToko = JSON.parse(localStorage.getItem('db_toko'));
+        let listPesanan = JSON.parse(localStorage.getItem('db_pesanan'));
+
+        function updateStats() {
+            document.getElementById('stat-prod').innerText = listProduk.length;
+            document.getElementById('stat-order').innerText = listPesanan.length;
+            document.getElementById('stat-stok').innerText = listProduk.reduce((acc, curr) => acc + Number(curr.stok), 0);
+            document.getElementById('stat-status').innerText = configToko.maintenance ? "MAINTENANCE" : configToko.status.toUpperCase();
+            document.getElementById('check-maint').checked = configToko.maintenance;
+            document.getElementById('maint-msg').value = configToko.pesanMaintenance;
+        }
+
+        function setToko(status) {
+            configToko.status = status;
+            localStorage.setItem('db_toko', JSON.stringify(configToko));
+            updateStats();
+        }
+
+        function toggleMaint() {
+            configToko.maintenance = document.getElementById('check-maint').checked;
+            localStorage.setItem('db_toko', JSON.stringify(configToko));
+            updateStats();
+        }
+
+        function saveMaintMsg() {
+            configToko.pesanMaintenance = document.getElementById('maint-msg').value;
+            localStorage.setItem('db_toko', JSON.stringify(configToko));
+            alert("Pesan berhasil diperbarui!");
+        }
+
+        function renderAdminProducts() {
+            const tbody = document.querySelector('#table-produk tbody');
+            tbody.innerHTML = "";
+            listProduk.forEach(p => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p.nama}</td>
+                    <td>Rp ${p.harga}</td>
+                    <td>${p.stok}</td>
+                    <td>
+                        <button class="btn btn-sm" style="background:#F59E0B; color:white; padding:2px 6px;" onclick="loadEditProduct(${p.id})">Edit</button>
+                        <button class="btn btn-sm" style="background:#EF4444; color:white; padding:2px 6px;" onclick="deleteProduct(${p.id})">Hapus</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('prod-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            let eid = document.getElementById('edit-id').value;
+            let name = document.getElementById('prod-name').value;
+            let price = Number(document.getElementById('prod-price').value);
+            let stock = Number(document.getElementById('prod-stock').value);
+
+            if(eid) {
+                let idx = listProduk.findIndex(p => p.id == eid);
+                listProduk[idx] = { id: Number(eid), nama: name, harga: price, stok: stock };
+            } else {
+                let newId = listProduk.length ? Math.max(...listProduk.map(p=>p.id)) + 1 : 1;
+                listProduk.push({ id: newId, nama: name, harga: price, stok: stock });
+            }
+            localStorage.setItem('db_produk', JSON.stringify(listProduk));
+            document.getElementById('prod-form').reset();
+            document.getElementById('edit-id').value = "";
+            renderAdminProducts();
+            updateStats();
+        });
+
+        function loadEditProduct(id) {
+            let p = listProduk.find(p => p.id == id);
+            document.getElementById('edit-id').value = p.id;
+            document.getElementById('prod-name').value = p.nama;
+            document.getElementById('prod-price').value = p.harga;
+            document.getElementById('prod-stock').value = p.stok;
+        }
+
+        function deleteProduct(id) {
+            if(confirm("Hapus produk ini?")) {
+                listProduk = listProduk.filter(p => p.id != id);
+                localStorage.setItem('db_produk', JSON.stringify(listProduk));
+                renderAdminProducts();
+                updateStats();
+            }
+        }
+
+        function renderAdminOrders() {
+            const tbody = document.querySelector('#table-pesanan tbody');
+            tbody.innerHTML = "";
+            listPesanan.reverse().forEach((o, index) => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${o.trxId}</td>
+                    <td>${o.name}<br><small>${o.pid}</small></td>
+                    <td>${o.prod}</td>
+                    <td>${o.payment}</td>
+                    <td><strong>${o.status}</strong></td>
+                    <td>
+                        <select onchange="changeStatus(${index}, this.value)">
+                            <option value="">-- Ubah --</option>
+                            <option value="Menunggu Pembayaran">Menunggu</option>
+                            <option value="Diproses">Diproses</option>
+                            <option value="Selesai">Selesai</option>
+                            <option value="Dibatalkan">Batal</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function changeStatus(idx, val) {
+            if(!val) return;
+            listPesanan.reverse(); // Kembalikan ke urutan asli sebelum mutasi
+            listPesanan[idx].status = val;
+            localStorage.setItem('db_pesanan', JSON.stringify(listPesanan));
+            listPesanan.reverse(); // Balik kembali untuk tampilan UI teratas
+            renderAdminOrders();
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = "login.html";
+        }
+
+        updateStats();
+        renderAdminProducts();
+        renderAdminOrders();
+    </script>
+</body>
+</html>
