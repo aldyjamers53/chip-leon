@@ -114,6 +114,7 @@ function checkTokoStatus() {
 }
 
 // Render Produk dengan Pagination
+// Render Produk dengan Gambar Dinamis (Koin D vs Koin MD)
 function renderProducts() {
     const container = document.getElementById('products-container');
     if(!container) return;
@@ -127,11 +128,23 @@ function renderProducts() {
         let isOut = prod.stok <= 0;
         let isStoreClosed = tokoData.status === "tutup" || tokoData.maintenance;
         
+        // --- LOGIKA PEMBEDA GAMBAR THUMBNAIL ---
+        let gambarThumbnail = "http://gamingku.xtgem.com/thumbnail.webp"; // Gambar default cadangan
+        
+        if (prod.nama.toUpperCase().includes("KOIN UNGU") || prod.nama.toUpperCase().includes("MD")) {
+            // Jika nama produk mengandung kata "Koin Ungu" atau "MD"
+            gambarThumbnail = "koin-md.webp"; 
+        } else if (prod.nama.toUpperCase().includes("KOIN EMAS") || prod.nama.toUpperCase().includes("-D")) {
+            // Jika nama produk mengandung kata "Koin Emas" atau "-D"
+            gambarThumbnail = "koin-d.webp";
+        }
+        // ---------------------------------------
+
         let card = document.createElement('div');
         card.className = "product-card";
         card.innerHTML = `
             ${isOut ? '<span class="badge-out">STOK HABIS</span>' : ''}
-            <img class="product-img" src="/thumbnail.webp" alt="Coin">
+            <img class="product-img" src="${gambarThumbnail}" alt="${prod.nama}">
             <div class="product-name">${prod.nama}</div>
             <div class="product-price">Rp ${prod.harga.toLocaleString('id-ID')}</div>
             <div class="product-stock">Stok: ${prod.stok}</div>
