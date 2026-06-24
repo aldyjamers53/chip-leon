@@ -27,6 +27,7 @@ const defaultToko = { status: "buka", maintenance: false, pesanMaintenance: "Sit
 if(!localStorage.getItem('db_produk')) localStorage.setItem('db_produk', JSON.stringify(defaultProduk));
 if(!localStorage.getItem('db_toko')) localStorage.setItem('db_toko', JSON.stringify(defaultToko));
 if(!localStorage.getItem('db_pesanan')) localStorage.setItem('db_pesanan', JSON.stringify([]));
+if(!localStorage.getItem('admin_limit_bongkar')) localStorage.setItem('admin_limit_bongkar', '10'); // Default limit awal bongkar 10B
 
 // State Management
 let produkData = JSON.parse(localStorage.getItem('db_produk'));
@@ -48,8 +49,9 @@ document.addEventListener("DOMContentLoaded", () => {
     renderProducts();
     populateOrderDropdown();
     initSlider();
+    updateTampilanLimit();
 
-    // AUTO-BINDING: Mencari form atau tombol pesan secara otomatis jika ID manual salah
+    // AUTO-BINDING Form Top Up
     const orderForm = document.getElementById('order-form') || document.querySelector('form');
     if (orderForm) {
         orderForm.addEventListener('submit', handleOrderSubmit);
@@ -57,9 +59,19 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const submitBtn = document.getElementById('btn-submit-order') || document.querySelector('button[type="submit"]') || document.querySelector('.btn-primary');
     if (submitBtn) {
-        // Pasang onclick cadangan agar jika form bypass, tombol tetap menangkap aksi klik
         submitBtn.setAttribute('onclick', 'prosesPesananLangsung(event)');
     }
+
+    // Atur aksi klik pada navigasi menu "Beranda" & "Order" agar bisa kembali dari halaman bongkar
+    const navLinks = document.querySelectorAll('.nav-bar a');
+    navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === '#beranda' || href === '#order-form-section') {
+            link.addEventListener('click', (e) => {
+                bukaTabBeranda(e);
+            });
+        }
+    });
 });
 
 // Dark/Light Mode
@@ -113,7 +125,6 @@ function checkTokoStatus() {
     }
 }
 
-// Render Produk dengan Pagination
 // Render Produk dengan Gambar Dinamis (Koin D vs Koin MD)
 function renderProducts() {
     const container = document.getElementById('products-container');
@@ -128,17 +139,13 @@ function renderProducts() {
         let isOut = prod.stok <= 0;
         let isStoreClosed = tokoData.status === "tutup" || tokoData.maintenance;
         
-        // --- LOGIKA PEMBEDA GAMBAR THUMBNAIL ---
         let gambarThumbnail = "koin-d.webp"; // Gambar default cadangan
         
         if (prod.nama.toUpperCase().includes("KOIN UNGU") || prod.nama.toUpperCase().includes("MD")) {
-            // Jika nama produk mengandung kata "Koin Ungu" atau "MD"
             gambarThumbnail = "koin-md.png"; 
         } else if (prod.nama.toUpperCase().includes("KOIN EMAS") || prod.nama.toUpperCase().includes("-D")) {
-            // Jika nama produk mengandung kata "Koin Emas" atau "-D"
             gambarThumbnail = "koin-d.webp";
         }
-        // ---------------------------------------
 
         let card = document.createElement('div');
         card.className = "product-card";
@@ -236,7 +243,7 @@ function initSlider() {
 
     setInterval(() => {
         index = (index + 1) % slides.length;
-        wrapper.style.transform = `translateX(-${index * 100}%)`;
+        if(wrapper) wrapper.style.transform = `translateX(-${index * 100}%)`;
         
         let dots = document.querySelectorAll('.dot');
         dots.forEach((d, i) => {
@@ -245,7 +252,7 @@ function initSlider() {
     }, 4000);
 }
 
-// Handler Utama Form Submit
+// Handler Utama Form Submit Top Up
 function handleOrderSubmit(e) {
     if(e) e.preventDefault(); 
     eksekusiKirimWA();
@@ -260,20 +267,17 @@ function prosesPesananLangsung(e) {
     eksekusiKirimWA();
 }
 
-/// Core Engine Pengiriman WhatsApp Universal (Versi Tombol Ceklis / Radio)
+// Core Engine Pengiriman WhatsApp Universal Top Up
 function eksekusiKirimWA() {
     if(tokoData.status === "tutup" || tokoData.maintenance) {
         alert("Maaf, Toko sedang tutup.");
         return;
     }
 
-    // Mengambil elemen input teks & produk
     const elPid = document.getElementById('player-id') || document.querySelector('input[placeholder*="ID"]');
     const elName = document.getElementById('buyer-name') || document.querySelector('input[placeholder*="Nama"]');
     const elWa = document.getElementById('whatsapp') || document.querySelector('input[placeholder*="WhatsApp"]') || document.querySelector('input[type="tel"]');
     const elProd = document.getElementById('select-product') || document.querySelector('select');
-
-    // FIX CEKLIS: Mengambil nilai dari radio button yang sedang dicentang/diceklis oleh user
     const elPaymentChecked = document.querySelector('input[name="payment_method"]:checked');
 
     if(!elPid || !elName || !elProd || !elPaymentChecked) {
@@ -285,8 +289,6 @@ function eksekusiKirimWA() {
     const name = elName.value;
     const wa = elWa ? elWa.value : "-";
     const prod = elProd.value;
-    
-    // Ambil nilai utama metode pembayaran (pasti berhuruf besar sesuai atribut value di HTML)
     const payment = elPaymentChecked.value; 
 
     if(!pid || !name || !prod || !payment) {
@@ -294,7 +296,6 @@ function eksekusiKirimWA() {
         return;
     }
 
-    // Penentuan Informasi Rekening berdasarkan tombol ceklis yang dipilih
     let infoRekening = "";
     if (payment === "DANA") {
         infoRekening = "DANA: 081556828324";
@@ -310,13 +311,11 @@ function eksekusiKirimWA() {
         infoRekening = "Silakan hubungi Admin untuk detail pembayaran.";
     }
 
-    // Simpan log data transaksi ke LocalStorage
     let orderList = JSON.parse(localStorage.getItem('db_pesanan')) || [];
     let trxId = "DOMINO-" + Math.floor(Math.random() * 900000 + 100000);
     orderList.push({ trxId, pid, name, wa, prod, payment, status: "Menunggu Pembayaran" });
     localStorage.setItem('db_pesanan', JSON.stringify(orderList));
 
-    // Susun Format Teks Pesan WhatsApp
     let msg = `*NOTA PESANAN - ${trxId}*\n`;
     msg += `-------------------------------------\n`;
     msg += `ID Game: ${pid}\n`;
@@ -331,8 +330,123 @@ function eksekusiKirimWA() {
     msg += `-------------------------------------\n`;
     msg += `Silakan lakukan transfer sesuai detail di atas, kemudian kirimkan bukti transfernya ke chat ini untuk diproses.`;
 
-    // Pengalihan langsung via lokasi dokumen berjalan (Aman dari pemblokiran browser)
-    // PERBAIKAN: Tanda kurung ditutup dengan benar di akhir )
-const whatsappUrl = `https://wa.me/6281556828324?text=${encodeURIComponent(msg)}`;
-window.location.href = whatsappUrl;
+    const whatsappUrl = `https://wa.me/6281556828324?text=${encodeURIComponent(msg)}`;
+    window.location.href = whatsappUrl;
+}
+
+// ========================================================
+// --- SYSTEM MANAGEMENT NAVIGATION & BONGKAR KOIN ---
+// ========================================================
+
+// Mengaktifkan halaman Bongkar Koin & Menyembunyikan Beranda
+function bukaTabBongkar() {
+    if(event) {
+        event.preventDefault();
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+
+    // Sembunyikan elemen utama halaman beranda
+    if(document.getElementById('beranda')) document.getElementById('beranda').style.display = 'none';
+    const mainGrid = document.querySelector('.main-grid');
+    if(mainGrid) mainGrid.style.display = 'none';
+    
+    // Tampilkan panel formulir Bongkar Koin
+    const sectionBongkar = document.getElementById('bongkar-koin-section');
+    if(sectionBongkar) {
+        sectionBongkar.classList.remove('hidden');
+        sectionBongkar.style.display = 'block';
+    }
+    
+    updateTampilanLimit();
+}
+
+// Mengembalikan tampilan dari Tab Bongkar ke Beranda/Order Utama
+function bukaTabBeranda(e) {
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    
+    // Beri penanda active kembali ke menu penunjuk target
+    if(e) {
+        e.currentTarget.classList.add('active');
+    }
+
+    // Tampilkan kembali elemen utama beranda
+    if(document.getElementById('beranda')) document.getElementById('beranda').style.display = 'block';
+    const mainGrid = document.querySelector('.main-grid');
+    if(mainGrid) mainGrid.style.display = 'grid';
+    
+    // Sembunyikan panel bongkar koin
+    const sectionBongkar = document.getElementById('bongkar-koin-section');
+    if(sectionBongkar) {
+        sectionBongkar.style.display = 'none';
+        sectionBongkar.classList.add('hidden');
+    }
+}
+
+// Menangani kalkulasi estimasi bongkar kosong (Anti-Error)
+function hitungEstimasiBongkar() {
+    const jumlah = document.getElementById('bongkar-jumlah').value;
+    console.log("Sistem memproses estimasi jumlah bongkar: " + jumlah + "B");
+}
+
+// Sinkronisasi Sisa Kuota Dari LocalStorage Ke Tampilan HTML Pembeli
+function updateTampilanLimit() {
+    const currentLimit = parseInt(localStorage.getItem('admin_limit_bongkar')) || 0;
+    const elText = document.getElementById('live-limit-bongkar');
+    const btnSubmit = document.getElementById('btn-submit-bongkar');
+
+    if (elText) elText.innerText = currentLimit + "B";
+
+    if (currentLimit <= 0) {
+        if (elText) elText.innerText = "HABIS (Kuota Penuh)";
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "MAAF, KUOTA BONGKARAN HARI INI HABIS";
+            btnSubmit.style.backgroundColor = "#e53e3e";
+        }
+    } else {
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "AJUKAN BONGKAR KE WA";
+            btnSubmit.style.backgroundColor = "#38a169";
+        }
+    }
+}
+
+// Engine Eksekusi Pengiriman Notulen Bongkar via WhatsApp
+function eksekusiBongkarWA(event) {
+    event.preventDefault();
+
+    const jumlahBongkar = parseInt(document.getElementById('bongkar-jumlah').value);
+    const rekeningUser = document.getElementById('bongkar-rekening').value;
+    const namaUser = document.getElementById('bongkar-nama').value;
+    const currentLimit = parseInt(localStorage.getItem('admin_limit_bongkar')) || 0;
+
+    if (!jumlahBongkar || !rekeningUser || !namaUser) {
+        alert("Silakan lengkapi data formulir penjualan koin Anda.");
+        return;
+    }
+
+    if (jumlahBongkar > currentLimit) {
+        alert(`Gagal! Jumlah bongkaran (${jumlahBongkar}B) melebihi sisa kuota hari ini (${currentLimit}B).`);
+        return;
+    }
+
+    // Potong limit kuota secara otomatis
+    const limitBaru = currentLimit - jumlahBongkar;
+    localStorage.setItem('admin_limit_bongkar', limitBaru.toString());
+    updateTampilanLimit();
+
+    let trxIdBongkar = "BONGKAR-" + Math.floor(Math.random() * 900000 + 100000);
+
+    let msg = `*FORMULIR BONGKAR KOIN - ${trxIdBongkar}*\n`;
+    msg += `-------------------------------------\n`;
+    msg += `Jumlah Bongkar: ${jumlahBongkar}B Koin\n`;
+    msg += `Tujuan Pencairan: ${rekeningUser}\n`;
+    msg += `Atas Nama: ${namaUser}\n`;
+    msg += `-------------------------------------\n\n`;
+    msg += `Halo Admin, saya sudah mengisi form bongkar koin sebesar ${jumlahBongkar}B. Mohon infokan nomor ID kirim game Anda agar saya bisa transfer koin sekarang.`;
+
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=6281556828324&text=${encodeURIComponent(msg)}`;
+    window.location.href = whatsappUrl;
 }
