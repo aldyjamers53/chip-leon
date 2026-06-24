@@ -101,13 +101,14 @@
         </div>
     </main>
 
-    <script>
+<script>
     // Guard Authentication Sederhana
     if(sessionStorage.getItem('admin_session') !== 'active') { window.location.href = "login.html"; }
 
-    let listProduk = JSON.parse(localStorage.getItem('db_produk'));
-    let configToko = JSON.parse(localStorage.getItem('db_toko'));
-    let listPesanan = JSON.parse(localStorage.getItem('db_pesanan'));
+    // Mengamankan pembacaan data awal agar tidak null/error jika localstorage kosong
+    let listProduk = JSON.parse(localStorage.getItem('db_produk')) || [];
+    let configToko = JSON.parse(localStorage.getItem('db_toko')) || { status: 'buka', maintenance: false, pesanMaintenance: '' };
+    let listPesanan = JSON.parse(localStorage.getItem('db_pesanan')) || [];
 
     function updateStats() {
         document.getElementById('stat-prod').innerText = listProduk.length;
@@ -117,28 +118,40 @@
         document.getElementById('check-maint').checked = configToko.maintenance;
         document.getElementById('maint-msg').value = configToko.pesanMaintenance;
         
-        // Memuat limit saat ini ke dalam form input admin
+        // Memuat limit kuota bongkar saat ini ke form input admin
         const currentLimit = localStorage.getItem('admin_limit_bongkar') || "10";
         const inputLimit = document.getElementById('admin-input-limit');
         if (inputLimit) {
             inputLimit.value = currentLimit;
         }
-    } // <-- Fungsi updateStats() SEKARANG SUDAH TERTUTUP DENGAN BENAR DI SINI
 
-    // Fungsi baru diletakkan mandiri di luar fungsi lain agar bisa dipanggil tombol HTML
+        // Memuat rate harga bongkar saat ini ke form input admin
+        const currentHarga = localStorage.getItem('admin_harga_bongkar') || "60000";
+        const inputHarga = document.getElementById('admin-input-harga-bongkar');
+        if (inputHarga) {
+            inputHarga.value = currentHarga;
+        }
+    }
+
+    // Fungsi menyimpan perubahan kuota dan rate harga dari Dashboard Admin
     function simpanLimitBongkar() {
         const inputLimit = document.getElementById('admin-input-limit');
-        if (!inputLimit) return;
+        const inputHarga = document.getElementById('admin-input-harga-bongkar');
+        
+        if (!inputLimit || !inputHarga) return;
 
         const nilaiBaru = parseInt(inputLimit.value);
+        const hargaBaru = parseInt(inputHarga.value);
 
-        if (isNaN(nilaiBaru) || nilaiBaru < 0) {
-            alert("Mohon masukkan angka limit yang valid (minimal 0).");
+        if (isNaN(nilaiBaru) || nilaiBaru < 0 || isNaN(hargaBaru) || hargaBaru < 0) {
+            alert("Mohon masukkan angka kuota limit dan harga yang valid.");
             return;
         }
 
         localStorage.setItem('admin_limit_bongkar', nilaiBaru.toString());
-        alert(`Sukses! Kuota bongkaran koin berhasil diubah menjadi ${nilaiBaru}B.`);
+        localStorage.setItem('admin_harga_bongkar', hargaBaru.toString());
+        
+        alert(`Sukses! Kuota diubah menjadi ${nilaiBaru}B dan Rate Harga diubah menjadi Rp ${hargaBaru.toLocaleString('id-ID')}/1B.`);
     }
 
     function setToko(status) {
@@ -160,21 +173,23 @@
     }
 
     function renderAdminProducts() {
-    const tbody = document.querySelector('#table-produk tbody');
-    tbody.innerHTML = "";
-    listProduk.forEach(p => {
-        let tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${p.nama}</td>
-            <td>Rp ${p.harga}</td>
-            <td>${p.stok}</td>
-            <td>
-                <button class="btn btn-sm" style="background:#F59E0B; color:white; padding:4px 8px; border:none; border-radius:4px; margin-bottom:4px;" onclick="loadEditProduct(${p.id})">Edit</button>
-                <button class="btn btn-sm" style="background:#EF4444; color:white; padding:4px 8px; border:none; border-radius:4px;" onclick="deleteProduct(${p.id})">Hapus</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+        const tbody = document.querySelector('#table-produk tbody');
+        if(!tbody) return;
+        tbody.innerHTML = "";
+        
+        listProduk.forEach(p => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${p.nama}</td>
+                <td>Rp ${Number(p.harga).toLocaleString('id-ID')}</td>
+                <td>${p.stok}</td>
+                <td>
+                    <button type="button" class="btn btn-sm" style="background:#F59E0B; color:white; padding:4px 8px; border:none; border-radius:4px; margin-bottom:4px;" onclick="loadEditProduct(${p.id})">Edit</button>
+                    <button type="button" class="btn btn-sm" style="background:#EF4444; color:white; padding:4px 8px; border:none; border-radius:4px;" onclick="deleteProduct(${p.id})">Hapus</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
     document.getElementById('prod-form').addEventListener('submit', (e) => {
@@ -198,16 +213,38 @@
         updateStats();
     });
 
-    // Perbaikan Bug: Agar variabel listPesanan terupdate saat halaman direfresh/diubah
+    function loadEditProduct(id) {
+        let p = listProduk.find(p => p.id == id);
+        if(!p) return;
+        document.getElementById('edit-id').value = p.id;
+        document.getElementById('prod-name').value = p.nama;
+        document.getElementById('prod-price').value = p.harga;
+        document.getElementById('prod-stock').value = p.stok;
+        // Otomatis scroll ke form atas agar mudah diedit di HP
+        document.getElementById('prod-form').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function deleteProduct(id) {
+        if(confirm("Hapus produk ini?")) {
+            listProduk = listProduk.filter(p => p.id != id);
+            localStorage.setItem('db_produk', JSON.stringify(listProduk));
+            renderAdminProducts();
+            updateStats();
+        }
+    }
+
     function renderAdminOrders() {
         listPesanan = JSON.parse(localStorage.getItem('db_pesanan')) || [];
         const tbody = document.querySelector('#table-pesanan tbody');
         if(!tbody) return;
         tbody.innerHTML = "";
         
-        // Memakai salinan array agar fungsi reverse() tidak merusak urutan database asli
+        // Memakai salinan urutan terbalik tanpa mengubah urutan index asli pangkalan data
         [...listPesanan].reverse().forEach((o, index) => {
             let tr = document.createElement('tr');
+            // Menghitung index asli di database array
+            let actualIndex = listPesanan.length - 1 - index;
+            
             tr.innerHTML = `
                 <td>${o.trxId}</td>
                 <td>${o.name}<br><small>${o.pid}</small></td>
@@ -215,12 +252,12 @@
                 <td>${o.payment}</td>
                 <td><strong>${o.status}</strong></td>
                 <td>
-                    <select onchange="changeStatus(${listPesanan.length - 1 - index}, this.value)">
+                    <select onchange="changeStatus(${actualIndex}, this.value)" style="padding:4px; border-radius:4px;">
                         <option value="">-- Ubah --</option>
-                        <option value="Menunggu Pembayaran">Menunggu</option>
-                        <option value="Diproses">Diproses</option>
-                        <option value="Selesai">Selesai</option>
-                        <option value="Dibatalkan">Batal</option>
+                        <option value="Menunggu Pembayaran" ${o.status === 'Menunggu Pembayaran' ? 'selected' : ''}>Menunggu</option>
+                        <option value="Diproses" ${o.status === 'Diproses' ? 'selected' : ''}>Diproses</option>
+                        <option value="Selesai" ${o.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+                        <option value="Dibatalkan" ${o.status === 'Dibatalkan' ? 'selected' : ''}>Batal</option>
                     </select>
                 </td>
             `;
@@ -244,7 +281,7 @@
     updateStats();
     renderAdminProducts();
     renderAdminOrders();
-        </script>
+</script>
     
 </body>
 </html>
