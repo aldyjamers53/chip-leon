@@ -50,7 +50,22 @@
                 </div>
             </div>
         </div>
-
+    </div>
+        
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-header">Pengaturan Bongkar Koin</div>
+            <div class="card-body" style="padding: 15px; display: flex; flex-direction: column; gap: 10px;">
+                <div class="form-group">
+                    <label for="admin-input-limit" style="font-weight: bold; display: block; margin-bottom: 5px;">Kuota/Limit Bongkaran Hari Ini (dalam satuan B):</label>
+                    <input type="number" id="admin-input-limit" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;" placeholder="Contoh: 10">
+                    <small style="color: #718096; display: block; margin-top: 5px;">Masukkan angka saja. Nilai ini akan terbaca langsung oleh pembeli di halaman depan.</small>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" onclick="simpanLimitBongkar()" style="background: #38a169; color: white; border: none; width: auto; display: inline-block;">
+                    <i class="fas fa-save"></i> Perbarui Kuota Bongkar
+                </button>
+            </div>
+        </div>
+    </div>
         <div class="card">
             <div class="card-header">Kelola Item / Produk</div>
             <div style="padding: 15px;">
@@ -87,138 +102,149 @@
     </main>
 
     <script>
-        // Guard Authentication Sederhana
-        if(sessionStorage.getItem('admin_session') !== 'active') { window.location.href = "login.html"; }
+    // Guard Authentication Sederhana
+    if(sessionStorage.getItem('admin_session') !== 'active') { window.location.href = "login.html"; }
 
-        let listProduk = JSON.parse(localStorage.getItem('db_produk'));
-        let configToko = JSON.parse(localStorage.getItem('db_toko'));
-        let listPesanan = JSON.parse(localStorage.getItem('db_pesanan'));
+    let listProduk = JSON.parse(localStorage.getItem('db_produk'));
+    let configToko = JSON.parse(localStorage.getItem('db_toko'));
+    let listPesanan = JSON.parse(localStorage.getItem('db_pesanan'));
 
-        function updateStats() {
-            document.getElementById('stat-prod').innerText = listProduk.length;
-            document.getElementById('stat-order').innerText = listPesanan.length;
-            document.getElementById('stat-stok').innerText = listProduk.reduce((acc, curr) => acc + Number(curr.stok), 0);
-            document.getElementById('stat-status').innerText = configToko.maintenance ? "MAINTENANCE" : configToko.status.toUpperCase();
-            document.getElementById('check-maint').checked = configToko.maintenance;
-            document.getElementById('maint-msg').value = configToko.pesanMaintenance;
+    function updateStats() {
+        document.getElementById('stat-prod').innerText = listProduk.length;
+        document.getElementById('stat-order').innerText = listPesanan.length;
+        document.getElementById('stat-stok').innerText = listProduk.reduce((acc, curr) => acc + Number(curr.stok), 0);
+        document.getElementById('stat-status').innerText = configToko.maintenance ? "MAINTENANCE" : configToko.status.toUpperCase();
+        document.getElementById('check-maint').checked = configToko.maintenance;
+        document.getElementById('maint-msg').value = configToko.pesanMaintenance;
+        
+        // Memuat limit saat ini ke dalam form input admin
+        const currentLimit = localStorage.getItem('admin_limit_bongkar') || "10";
+        const inputLimit = document.getElementById('admin-input-limit');
+        if (inputLimit) {
+            inputLimit.value = currentLimit;
+        }
+    } // <-- Fungsi updateStats() SEKARANG SUDAH TERTUTUP DENGAN BENAR DI SINI
+
+    // Fungsi baru diletakkan mandiri di luar fungsi lain agar bisa dipanggil tombol HTML
+    function simpanLimitBongkar() {
+        const inputLimit = document.getElementById('admin-input-limit');
+        if (!inputLimit) return;
+
+        const nilaiBaru = parseInt(inputLimit.value);
+
+        if (isNaN(nilaiBaru) || nilaiBaru < 0) {
+            alert("Mohon masukkan angka limit yang valid (minimal 0).");
+            return;
         }
 
-        function setToko(status) {
-            configToko.status = status;
-            localStorage.setItem('db_toko', JSON.stringify(configToko));
-            updateStats();
-        }
+        localStorage.setItem('admin_limit_bongkar', nilaiBaru.toString());
+        alert(`Sukses! Kuota bongkaran koin berhasil diubah menjadi ${nilaiBaru}B.`);
+    }
 
-        function toggleMaint() {
-            configToko.maintenance = document.getElementById('check-maint').checked;
-            localStorage.setItem('db_toko', JSON.stringify(configToko));
-            updateStats();
-        }
-
-        function saveMaintMsg() {
-            configToko.pesanMaintenance = document.getElementById('maint-msg').value;
-            localStorage.setItem('db_toko', JSON.stringify(configToko));
-            alert("Pesan berhasil diperbarui!");
-        }
-
-        function renderAdminProducts() {
-            const tbody = document.querySelector('#table-produk tbody');
-            tbody.innerHTML = "";
-            listProduk.forEach(p => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${p.nama}</td>
-                    <td>Rp ${p.harga}</td>
-                    <td>${p.stok}</td>
-                    <td>
-                        <button class="btn btn-sm" style="background:#F59E0B; color:white; padding:2px 6px;" onclick="loadEditProduct(${p.id})">Edit</button>
-                        <button class="btn btn-sm" style="background:#EF4444; color:white; padding:2px 6px;" onclick="deleteProduct(${p.id})">Hapus</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        document.getElementById('prod-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            let eid = document.getElementById('edit-id').value;
-            let name = document.getElementById('prod-name').value;
-            let price = Number(document.getElementById('prod-price').value);
-            let stock = Number(document.getElementById('prod-stock').value);
-
-            if(eid) {
-                let idx = listProduk.findIndex(p => p.id == eid);
-                listProduk[idx] = { id: Number(eid), nama: name, harga: price, stok: stock };
-            } else {
-                let newId = listProduk.length ? Math.max(...listProduk.map(p=>p.id)) + 1 : 1;
-                listProduk.push({ id: newId, nama: name, harga: price, stok: stock });
-            }
-            localStorage.setItem('db_produk', JSON.stringify(listProduk));
-            document.getElementById('prod-form').reset();
-            document.getElementById('edit-id').value = "";
-            renderAdminProducts();
-            updateStats();
-        });
-
-        function loadEditProduct(id) {
-            let p = listProduk.find(p => p.id == id);
-            document.getElementById('edit-id').value = p.id;
-            document.getElementById('prod-name').value = p.nama;
-            document.getElementById('prod-price').value = p.harga;
-            document.getElementById('prod-stock').value = p.stok;
-        }
-
-        function deleteProduct(id) {
-            if(confirm("Hapus produk ini?")) {
-                listProduk = listProduk.filter(p => p.id != id);
-                localStorage.setItem('db_produk', JSON.stringify(listProduk));
-                renderAdminProducts();
-                updateStats();
-            }
-        }
-
-        function renderAdminOrders() {
-            const tbody = document.querySelector('#table-pesanan tbody');
-            tbody.innerHTML = "";
-            listPesanan.reverse().forEach((o, index) => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${o.trxId}</td>
-                    <td>${o.name}<br><small>${o.pid}</small></td>
-                    <td>${o.prod}</td>
-                    <td>${o.payment}</td>
-                    <td><strong>${o.status}</strong></td>
-                    <td>
-                        <select onchange="changeStatus(${index}, this.value)">
-                            <option value="">-- Ubah --</option>
-                            <option value="Menunggu Pembayaran">Menunggu</option>
-                            <option value="Diproses">Diproses</option>
-                            <option value="Selesai">Selesai</option>
-                            <option value="Dibatalkan">Batal</option>
-                        </select>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function changeStatus(idx, val) {
-            if(!val) return;
-            listPesanan.reverse(); // Kembalikan ke urutan asli sebelum mutasi
-            listPesanan[idx].status = val;
-            localStorage.setItem('db_pesanan', JSON.stringify(listPesanan));
-            listPesanan.reverse(); // Balik kembali untuk tampilan UI teratas
-            renderAdminOrders();
-        }
-
-        function logout() {
-            sessionStorage.clear();
-            window.location.href = "login.html";
-        }
-
+    function setToko(status) {
+        configToko.status = status;
+        localStorage.setItem('db_toko', JSON.stringify(configToko));
         updateStats();
+    }
+
+    function toggleMaint() {
+        configToko.maintenance = document.getElementById('check-maint').checked;
+        localStorage.setItem('db_toko', JSON.stringify(configToko));
+        updateStats();
+    }
+
+    function saveMaintMsg() {
+        configToko.pesanMaintenance = document.getElementById('maint-msg').value;
+        localStorage.setItem('db_toko', JSON.stringify(configToko));
+        alert("Pesan berhasil diperbarui!");
+    }
+
+    function renderAdminProducts() {
+        const tbody = document.querySelector('#table-produk tbody');
+        tbody.innerHTML = "";
+        listProduk.forEach(p => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${p.nama}</td>
+                <td>Rp ${p.harga}</td>
+                <td>${p.stok}</td>
+                <td>
+                    <button class="btn btn-sm" style="background:#F59E0B; color:white; padding:2px 6px;" onclick="loadEditProduct(${p.id})">Edit</button>
+                    <button class="btn btn-sm" style="background:#EF4444; color:white; padding:2px 6px;" onclick="deleteProduct(${p.id})">Hapus</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    document.getElementById('prod-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        let eid = document.getElementById('edit-id').value;
+        let name = document.getElementById('prod-name').value;
+        let price = Number(document.getElementById('prod-price').value);
+        let stock = Number(document.getElementById('prod-stock').value);
+
+        if(eid) {
+            let idx = listProduk.findIndex(p => p.id == eid);
+            listProduk[idx] = { id: Number(eid), nama: name, harga: price, stok: stock };
+        } else {
+            let newId = listProduk.length ? Math.max(...listProduk.map(p=>p.id)) + 1 : 1;
+            listProduk.push({ id: newId, nama: name, harga: price, stok: stock });
+        }
+        localStorage.setItem('db_produk', JSON.stringify(listProduk));
+        document.getElementById('prod-form').reset();
+        document.getElementById('edit-id').value = "";
         renderAdminProducts();
+        updateStats();
+    });
+
+    // Perbaikan Bug: Agar variabel listPesanan terupdate saat halaman direfresh/diubah
+    function renderAdminOrders() {
+        listPesanan = JSON.parse(localStorage.getItem('db_pesanan')) || [];
+        const tbody = document.querySelector('#table-pesanan tbody');
+        if(!tbody) return;
+        tbody.innerHTML = "";
+        
+        // Memakai salinan array agar fungsi reverse() tidak merusak urutan database asli
+        [...listPesanan].reverse().forEach((o, index) => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${o.trxId}</td>
+                <td>${o.name}<br><small>${o.pid}</small></td>
+                <td>${o.prod}</td>
+                <td>${o.payment}</td>
+                <td><strong>${o.status}</strong></td>
+                <td>
+                    <select onchange="changeStatus(${listPesanan.length - 1 - index}, this.value)">
+                        <option value="">-- Ubah --</option>
+                        <option value="Menunggu Pembayaran">Menunggu</option>
+                        <option value="Diproses">Diproses</option>
+                        <option value="Selesai">Selesai</option>
+                        <option value="Dibatalkan">Batal</option>
+                    </select>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function changeStatus(actualIndex, val) {
+        if(!val) return;
+        listPesanan[actualIndex].status = val;
+        localStorage.setItem('db_pesanan', JSON.stringify(listPesanan));
         renderAdminOrders();
-    </script>
+    }
+
+    function logout() {
+        sessionStorage.clear();
+        window.location.href = "login.html";
+    }
+
+    // Eksekusi Awal Saat Halaman Terbuka
+    updateStats();
+    renderAdminProducts();
+    renderAdminOrders();
+        </script>
+    
 </body>
 </html>
