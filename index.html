@@ -30,7 +30,7 @@
         </div>
         <nav class="nav-bar">
             <a href="#beranda" class="nav-link active"><i class="fas fa-home"></i> Beranda</a>
-            <a href="#cara-bayar" class="nav-link"><i class="fas fa-wallet"></i> Bayar</a>
+            <a href="#bongkar-koin" class="nav-link" onclick="bukaTabBongkar()"><i class="fas fa-wallet"></i> Bongkar Koin</a>
             <a href="#order-form-section" class="nav-link"><i class="fas fa-shopping-cart"></i> Order</a>
         </nav>
     </header>
@@ -99,14 +99,6 @@
             <input type="radio" name="payment_method" value="GOPAY">
             <span class="checkmark"></span> GOPAY
         </label>
-        <label class="payment-check-item">
-            <input type="radio" name="payment_method" value="BRI">
-            <span class="checkmark"></span> Bank BRI
-        </label>
-        <label class="payment-check-item">
-            <input type="radio" name="payment_method" value="SeaBank">
-            <span class="checkmark"></span> SeaBank
-        </label>
     </div>
 </div>
                         <button type="submit" id="btn-submit-order" class="btn btn-primary btn-block">
@@ -129,7 +121,53 @@
                 </div>
             </aside>
         </div>
+<!-- KONTEN HALAMAN BONGKAR KOIN (Sembunyikan default secara CSS) -->
+<section id="bongkar-koin-section" class="content-section hidden">
+    <div class="bongkar-box">
+        <h2>Formulir Bongkar Koin (Jual)</h2>
+        
+        <!-- Indikator Limit Hari Ini Dari Admin -->
+        <div class="limit-indicator">
+            <p>Sisa Kuota Bongkaran Hari Ini: <strong id="live-limit-bongkar">0B</strong></p>
+            <div class="progress-bar-container">
+                <div id="limit-progress" class="progress-bar"></div>
+            </div>
+        </div>
 
+        <form id="form-bongkar" onsubmit="eksekusiBongkarWA(event)">
+            <div class="form-group">
+                <label>Jumlah Koin yang Mau Dibongkar:</label>
+                <select id="bongkar-jumlah" onchange="hitungEstimasiBongkar()" required>
+                    <option value="">-- Pilih Jumlah Koin --</option>
+                    <option value="1">1B Koin</option>
+                    <option value="2">2B Koin</option>
+                    <option value="5">5B Koin</option>
+                    <option value="10">10B Koin</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Nomor Rekening / E-Wallet Anda (Untuk Terima Uang):</label>
+                <input type="text" id="bongkar-rekening" placeholder="Contoh: DANA 08123456789 atau BRI 12345678" required>
+            </div>
+
+            <div class="form-group">
+                <label>Nama Pemilik Rekening:</label>
+                <input type="text" id="bongkar-nama" placeholder="Masukkan nama lengkap Anda..." required>
+            </div>
+
+            <div class="form-note-bongkar">
+                <strong>Sistem Kerja:</strong><br>
+                1. Kirim formulir ini ke WhatsApp Admin untuk mendapatkan ID tujuan pengiriman koin.<br>
+                2. Kirimkan koin Anda ke ID tersebut di dalam game.<br>
+                3. Kirim bukti kirim koin ke WA Admin.<br>
+                4. Uang akan ditransfer langsung ke rekening/e-wallet Anda di atas!
+            </div>
+
+            <button type="submit" id="btn-submit-bongkar" class="btn btn-success btn-block">AJUKAN BONGKAR KE WA</button>
+        </form>
+    </div>
+</section>
         <section class="testi-section">
             <div class="section-title"><h2><i class="fas fa-comment-dots"></i> Testimoni Pelanggan</h2></div>
             <div class="testi-slider">
