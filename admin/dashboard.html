@@ -100,12 +100,10 @@
             </div>
         </div>
     </main>
-
 <script>
     // Guard Authentication Sederhana
     if(sessionStorage.getItem('admin_session') !== 'active') { window.location.href = "login.html"; }
 
-    // Mengamankan pembacaan data awal agar tidak null/error jika localstorage kosong
     let listProduk = JSON.parse(localStorage.getItem('db_produk')) || [];
     let configToko = JSON.parse(localStorage.getItem('db_toko')) || { status: 'buka', maintenance: false, pesanMaintenance: '' };
     let listPesanan = JSON.parse(localStorage.getItem('db_pesanan')) || [];
@@ -117,41 +115,6 @@
         document.getElementById('stat-status').innerText = configToko.maintenance ? "MAINTENANCE" : configToko.status.toUpperCase();
         document.getElementById('check-maint').checked = configToko.maintenance;
         document.getElementById('maint-msg').value = configToko.pesanMaintenance;
-        
-        // Memuat limit kuota bongkar saat ini ke form input admin
-        const currentLimit = localStorage.getItem('admin_limit_bongkar') || "10";
-        const inputLimit = document.getElementById('admin-input-limit');
-        if (inputLimit) {
-            inputLimit.value = currentLimit;
-        }
-
-        // Memuat rate harga bongkar saat ini ke form input admin
-        const currentHarga = localStorage.getItem('admin_harga_bongkar') || "60000";
-        const inputHarga = document.getElementById('admin-input-harga-bongkar');
-        if (inputHarga) {
-            inputHarga.value = currentHarga;
-        }
-    }
-
-    // Fungsi menyimpan perubahan kuota dan rate harga dari Dashboard Admin
-    function simpanLimitBongkar() {
-        const inputLimit = document.getElementById('admin-input-limit');
-        const inputHarga = document.getElementById('admin-input-harga-bongkar');
-        
-        if (!inputLimit || !inputHarga) return;
-
-        const nilaiBaru = parseInt(inputLimit.value);
-        const hargaBaru = parseInt(inputHarga.value);
-
-        if (isNaN(nilaiBaru) || nilaiBaru < 0 || isNaN(hargaBaru) || hargaBaru < 0) {
-            alert("Mohon masukkan angka kuota limit dan harga yang valid.");
-            return;
-        }
-
-        localStorage.setItem('admin_limit_bongkar', nilaiBaru.toString());
-        localStorage.setItem('admin_harga_bongkar', hargaBaru.toString());
-        
-        alert(`Sukses! Kuota diubah menjadi ${nilaiBaru}B dan Rate Harga diubah menjadi Rp ${hargaBaru.toLocaleString('id-ID')}/1B.`);
     }
 
     function setToko(status) {
@@ -220,7 +183,6 @@
         document.getElementById('prod-name').value = p.nama;
         document.getElementById('prod-price').value = p.harga;
         document.getElementById('prod-stock').value = p.stok;
-        // Otomatis scroll ke form atas agar mudah diedit di HP
         document.getElementById('prod-form').scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -239,10 +201,8 @@
         if(!tbody) return;
         tbody.innerHTML = "";
         
-        // Memakai salinan urutan terbalik tanpa mengubah urutan index asli pangkalan data
         [...listPesanan].reverse().forEach((o, index) => {
             let tr = document.createElement('tr');
-            // Menghitung index asli di database array
             let actualIndex = listPesanan.length - 1 - index;
             
             tr.innerHTML = `
@@ -277,11 +237,10 @@
         window.location.href = "login.html";
     }
 
-    // Eksekusi Awal Saat Halaman Terbuka
+    // Jalankan komponen dasar utama
     updateStats();
     renderAdminProducts();
     renderAdminOrders();
 </script>
-    
 </body>
 </html>
