@@ -160,21 +160,21 @@
     }
 
     function renderAdminProducts() {
-        const tbody = document.querySelector('#table-produk tbody');
-        tbody.innerHTML = "";
-        listProduk.forEach(p => {
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${p.nama}</td>
-                <td>Rp ${p.harga}</td>
-                <td>${p.stok}</td>
-                <td>
-                    <button class="btn btn-sm" style="background:#F59E0B; color:white; padding:2px 6px;" onclick="loadEditProduct(${p.id})">Edit</button>
-                    <button class="btn btn-sm" style="background:#EF4444; color:white; padding:2px 6px;" onclick="deleteProduct(${p.id})">Hapus</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+    const tbody = document.querySelector('#table-produk tbody');
+    tbody.innerHTML = "";
+    listProduk.forEach(p => {
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${p.nama}</td>
+            <td>Rp ${p.harga}</td>
+            <td>${p.stok}</td>
+            <td>
+                <button class="btn btn-sm" style="background:#F59E0B; color:white; padding:4px 8px; border:none; border-radius:4px; margin-bottom:4px;" onclick="loadEditProduct(${p.id})">Edit</button>
+                <button class="btn btn-sm" style="background:#EF4444; color:white; padding:4px 8px; border:none; border-radius:4px;" onclick="deleteProduct(${p.id})">Hapus</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
     }
 
     document.getElementById('prod-form').addEventListener('submit', (e) => {
