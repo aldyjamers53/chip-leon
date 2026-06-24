@@ -129,11 +129,11 @@ function renderProducts() {
         let isStoreClosed = tokoData.status === "tutup" || tokoData.maintenance;
         
         // --- LOGIKA PEMBEDA GAMBAR THUMBNAIL ---
-        let gambarThumbnail = "http://gamingku.xtgem.com/thumbnail.webp"; // Gambar default cadangan
+        let gambarThumbnail = "koin-d.webp"; // Gambar default cadangan
         
         if (prod.nama.toUpperCase().includes("KOIN UNGU") || prod.nama.toUpperCase().includes("MD")) {
             // Jika nama produk mengandung kata "Koin Ungu" atau "MD"
-            gambarThumbnail = "koin-md.webp"; 
+            gambarThumbnail = "koin-md.png"; 
         } else if (prod.nama.toUpperCase().includes("KOIN EMAS") || prod.nama.toUpperCase().includes("-D")) {
             // Jika nama produk mengandung kata "Koin Emas" atau "-D"
             gambarThumbnail = "koin-d.webp";
