@@ -1,8 +1,5 @@
 // Database Default Mocking (Dimuat ke localStorage jika belum ada)
-const defaultProduk = [
-    
-];
-
+const defaultProduk = [];
 const defaultToko = { status: "buka", maintenance: false, pesanMaintenance: "Situs sedang diperbarui." };
 
 if(!localStorage.getItem('db_produk')) localStorage.setItem('db_produk', JSON.stringify(defaultProduk));
@@ -10,9 +7,6 @@ if(!localStorage.getItem('db_toko')) localStorage.setItem('db_toko', JSON.string
 if(!localStorage.getItem('db_pesanan')) localStorage.setItem('db_pesanan', JSON.stringify([]));
 if(!localStorage.getItem('admin_limit_bongkar')) localStorage.setItem('admin_limit_bongkar', '10'); // Default limit awal bongkar 10B
 
-// State Management
-let produkData = JSON.parse(localStorage.getItem('db_produk'));
-let tokoData = JSON.parse(localStorage.getItem('db_toko'));
 let currentPage = 1;
 const itemsPerPage = 8;
 
@@ -80,6 +74,7 @@ function initTheme() {
 
 // Cek Status Toko & Maintenance
 function checkTokoStatus() {
+    let tokoData = JSON.parse(localStorage.getItem('db_toko')) || defaultToko;
     const badge = document.getElementById('store-status');
     const notice = document.getElementById('maintenance-notice');
     const submitBtn = document.getElementById('btn-submit-order') || document.querySelector('.btn-primary');
@@ -112,6 +107,10 @@ function renderProducts() {
     if(!container) return;
     container.innerHTML = "";
 
+    // Selalu ambil data terupdate dari localStorage agar produk baru langsung tayang
+    let produkData = JSON.parse(localStorage.getItem('db_produk')) || [];
+    let tokoData = JSON.parse(localStorage.getItem('db_toko')) || defaultToko;
+
     let start = (currentPage - 1) * itemsPerPage;
     let end = start + itemsPerPage;
     let paginatedItems = produkData.slice(start, end);
@@ -134,7 +133,7 @@ function renderProducts() {
             ${isOut ? '<span class="badge-out">STOK HABIS</span>' : ''}
             <img class="product-img" src="${gambarThumbnail}" alt="${prod.nama}">
             <div class="product-name">${prod.nama}</div>
-            <div class="product-price">Rp ${prod.harga.toLocaleString('id-ID')}</div>
+            <div class="product-price">Rp ${Number(prod.harga).toLocaleString('id-ID')}</div>
             <div class="product-stock">Stok: ${prod.stok}</div>
             <button class="btn btn-primary btn-sm btn-block" ${ (isOut || isStoreClosed) ? 'disabled' : ''} onclick="quickBuy('${prod.nama}')">
                 ${isOut ? 'HABIS' : 'BELI'}
@@ -143,14 +142,15 @@ function renderProducts() {
         container.appendChild(card);
     });
 
-    renderPagination();
+    renderPagination(produkData);
 }
 
-function renderPagination() {
+function renderPagination(produkData) {
     const pContainer = document.getElementById('pagination');
     if(!pContainer) return;
     pContainer.innerHTML = "";
     let totalPages = Math.ceil(produkData.length / itemsPerPage);
+    if(totalPages <= 1) return; // Menyembunyikan navigasi jika halaman sedikit
 
     let prevBtn = document.createElement('button');
     prevBtn.className = "page-btn";
@@ -180,11 +180,13 @@ function populateOrderDropdown() {
     const select = document.getElementById('select-product');
     if(!select) return;
     select.innerHTML = '<option value="">-- Pilih Paket Koin --</option>';
+    
+    let produkData = JSON.parse(localStorage.getItem('db_produk')) || [];
     produkData.forEach(prod => {
         if(prod.stok > 0) {
             let opt = document.createElement('option');
             opt.value = `${prod.nama} | Rp ${prod.harga}`;
-            opt.innerText = `${prod.nama} (Rp ${prod.harga.toLocaleString('id-ID')})`;
+            opt.innerText = `${prod.nama} (Rp ${Number(prod.harga).toLocaleString('id-ID')})`;
             select.appendChild(opt);
         }
     });
@@ -250,6 +252,7 @@ function prosesPesananLangsung(e) {
 
 // Core Engine Pengiriman WhatsApp Universal Top Up
 function eksekusiKirimWA() {
+    let tokoData = JSON.parse(localStorage.getItem('db_toko')) || defaultToko;
     if(tokoData.status === "tutup" || tokoData.maintenance) {
         alert("Maaf, Toko sedang tutup.");
         return;
@@ -319,7 +322,6 @@ function eksekusiKirimWA() {
 // --- SYSTEM MANAGEMENT NAVIGATION & BONGKAR KOIN ---
 // ========================================================
 
-// Mengaktifkan halaman Bongkar Koin & Menyembunyikan Beranda
 function bukaTabBongkar() {
     if(event) {
         event.preventDefault();
@@ -327,12 +329,10 @@ function bukaTabBongkar() {
         event.currentTarget.classList.add('active');
     }
 
-    // Sembunyikan elemen utama halaman beranda
     if(document.getElementById('beranda')) document.getElementById('beranda').style.display = 'none';
     const mainGrid = document.querySelector('.main-grid');
     if(mainGrid) mainGrid.style.display = 'none';
     
-    // Tampilkan panel formulir Bongkar Koin
     const sectionBongkar = document.getElementById('bongkar-koin-section');
     if(sectionBongkar) {
         sectionBongkar.classList.remove('hidden');
@@ -342,21 +342,17 @@ function bukaTabBongkar() {
     updateTampilanLimit();
 }
 
-// Mengembalikan tampilan dari Tab Bongkar ke Beranda/Order Utama
 function bukaTabBeranda(e) {
     document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
     
-    // Beri penanda active kembali ke menu penunjuk target
     if(e) {
         e.currentTarget.classList.add('active');
     }
 
-    // Tampilkan kembali elemen utama beranda
     if(document.getElementById('beranda')) document.getElementById('beranda').style.display = 'block';
     const mainGrid = document.querySelector('.main-grid');
     if(mainGrid) mainGrid.style.display = 'grid';
     
-    // Sembunyikan panel bongkar koin
     const sectionBongkar = document.getElementById('bongkar-koin-section');
     if(sectionBongkar) {
         sectionBongkar.style.display = 'none';
@@ -364,13 +360,11 @@ function bukaTabBeranda(e) {
     }
 }
 
-// Menangani kalkulasi estimasi bongkar kosong (Anti-Error)
 function hitungEstimasiBongkar() {
     const jumlah = document.getElementById('bongkar-jumlah').value;
     console.log("Sistem memproses estimasi jumlah bongkar: " + jumlah + "B");
 }
 
-// Sinkronisasi Sisa Kuota Dari LocalStorage Ke Tampilan HTML Pembeli
 function updateTampilanLimit() {
     const currentLimit = parseInt(localStorage.getItem('admin_limit_bongkar')) || 0;
     const elText = document.getElementById('live-limit-bongkar');
@@ -394,7 +388,6 @@ function updateTampilanLimit() {
     }
 }
 
-// Engine Eksekusi Pengiriman Notulen Bongkar via WhatsApp
 function eksekusiBongkarWA(event) {
     event.preventDefault();
 
@@ -413,7 +406,6 @@ function eksekusiBongkarWA(event) {
         return;
     }
 
-    // Potong limit kuota secara otomatis
     const limitBaru = currentLimit - jumlahBongkar;
     localStorage.setItem('admin_limit_bongkar', limitBaru.toString());
     updateTampilanLimit();
