@@ -1,25 +1,6 @@
 // Database Default Mocking (Dimuat ke localStorage jika belum ada)
 const defaultProduk = [
-    { id: 1, nama: "200M Koin Emas-D", harga: 17100, stok: 10 },
-    { id: 2, nama: "300M Koin Emas-D", harga: 23400, stok: 15 },
-    { id: 3, nama: "400M Koin Emas-D", harga: 29700, stok: 5 },
-    { id: 4, nama: "500M Koin Emas-D", harga: 36000, stok: 12 },
-    { id: 5, nama: "600M Koin Emas-D", harga: 42300, stok: 0 },
-    { id: 6, nama: "700M Koin Emas-D", harga: 48600, stok: 8 },
-    { id: 7, nama: "800M Koin Emas-D", harga: 54900, stok: 14 },
-    { id: 8, nama: "900M Koin Emas-D", harga: 61200, stok: 9 },
-    { id: 9, nama: "1B Koin Emas-D", harga: 67500, stok: 20 },
-    { id: 10, nama: "1.5B Koin Emas-D", harga: 99000, stok: 3 },
-    { id: 11, nama: "2B Koin Emas-D", harga: 130500, stok: 2 },
-    { id: 12, nama: "2.7B Koin Emas-D", harga: 174600, stok: 4 },
-    { id: 13, nama: "3B Koin Emas-D", harga: 193500, stok: 6 },
-    { id: 14, nama: "4B Koin Emas-D", harga: 256500, stok: 0 },
-    { id: 15, nama: "5B Koin Emas-D", harga: 319500, stok: 1 },
-    { id: 16, nama: "6B Koin Emas-D", harga: 382500, stok: 4 },
-    { id: 17, nama: "7B Koin Emas-D", harga: 445500, stok: 2 },
-    { id: 18, nama: "8B Koin Emas-D", harga: 508500, stok: 3 }, 
-    { id: 19, nama: "9B Koin Emas-D", harga: 571500, stok: 5 },
-    { id: 20, nama: "10B Koin Emas-D", harga: 634500, stok: 2 }
+    
 ];
 
 const defaultToko = { status: "buka", maintenance: false, pesanMaintenance: "Situs sedang diperbarui." };
