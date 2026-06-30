@@ -14,6 +14,11 @@
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th, td { border: 1px solid var(--border-color); padding: 8px; text-align: left; }
         th { background: rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input[type="text"], .form-group input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .card { background: white; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; }
+        .card-header { background: #f7f7f7; padding: 10px 15px; font-weight: bold; border-bottom: 1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -50,22 +55,21 @@
                 </div>
             </div>
         </div>
-    </div>
         
-        <div class="card" style="margin-top: 20px;">
+        <div class="card">
             <div class="card-header">Pengaturan Bongkar Koin</div>
             <div class="card-body" style="padding: 15px; display: flex; flex-direction: column; gap: 10px;">
                 <div class="form-group">
-                    <label for="admin-input-limit" style="font-weight: bold; display: block; margin-bottom: 5px;">Kuota/Limit Bongkaran Hari Ini (dalam satuan B):</label>
-                    <input type="number" id="admin-input-limit" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;" placeholder="Contoh: 10">
+                    <label for="admin-input-limit">Kuota/Limit Bongkaran Hari Ini (dalam satuan B):</label>
+                    <input type="number" id="admin-input-limit" placeholder="Contoh: 10">
                     <small style="color: #718096; display: block; margin-top: 5px;">Masukkan angka saja. Nilai ini akan terbaca langsung oleh pembeli di halaman depan.</small>
                 </div>
                 <button type="button" class="btn btn-primary btn-sm" onclick="simpanLimitBongkar()" style="background: #38a169; color: white; border: none; width: auto; display: inline-block;">
-                    <i class="fas fa-save"></i> Perbarui Kuota Bongkar
+                    Perbarui Kuota Bongkar
                 </button>
             </div>
         </div>
-    </div>
+
         <div class="card">
             <div class="card-header">Kelola Item / Produk</div>
             <div style="padding: 15px;">
@@ -100,8 +104,8 @@
             </div>
         </div>
     </main>
+
 <script>
-    // Guard Authentication Sederhana
     if(sessionStorage.getItem('admin_session') !== 'active') { window.location.href = "login.html"; }
 
     let listProduk = JSON.parse(localStorage.getItem('db_produk')) || [];
@@ -115,6 +119,9 @@
         document.getElementById('stat-status').innerText = configToko.maintenance ? "MAINTENANCE" : configToko.status.toUpperCase();
         document.getElementById('check-maint').checked = configToko.maintenance;
         document.getElementById('maint-msg').value = configToko.pesanMaintenance;
+        
+        let currentLimit = localStorage.getItem('admin_limit_bongkar') || '10';
+        document.getElementById('admin-input-limit').value = currentLimit;
     }
 
     function setToko(status) {
@@ -133,6 +140,13 @@
         configToko.pesanMaintenance = document.getElementById('maint-msg').value;
         localStorage.setItem('db_toko', JSON.stringify(configToko));
         alert("Pesan berhasil diperbarui!");
+    }
+
+    function simpanLimitBongkar() {
+        let val = document.getElementById('admin-input-limit').value;
+        if(val === "") val = "0";
+        localStorage.setItem('admin_limit_bongkar', val);
+        alert("Kuota bongkar berhasil diperbarui menjadi " + val + "B!");
     }
 
     function renderAdminProducts() {
@@ -237,7 +251,6 @@
         window.location.href = "login.html";
     }
 
-    // Jalankan komponen dasar utama
     updateStats();
     renderAdminProducts();
     renderAdminOrders();
